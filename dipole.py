@@ -8,6 +8,7 @@ from parameter import Parameter
 from constant import Constant
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 class Dipole(object):
     """Molecular dipoles of system."""
@@ -21,6 +22,7 @@ class Dipole(object):
 
         """
         self._universe = universe
+        self._box_mat = np.array([ts.dimensions for ts in self._universe.trajectory])
         self._atom_vec = self._universe.select_atoms('all')
         self._charge_vec = self._initialize_parameters(Parameter())
 
@@ -58,33 +60,32 @@ class Dipole(object):
         tot_dip_mat = np.zeros((self._num_frame, 4))
         for i, ts in tqdm(enumerate(self._universe.trajectory), total=self._num_frame):
             pos_atom_mat = self._atom_vec.positions
-            tot_dip_mat[i,:3] = np.sum(pos_atom_mat * self._charge_vec.reshape(-1, 1), axis=0) # broadcasting along axis = 1
+            tot_dip_mat[i,:3] = np.sum(pos_atom_mat * self._charge_vec.reshape(-1,1), axis=0) # broadcasting along axis = 1
         tot_dip_mat[:,3] = np.linalg.norm(tot_dip_mat[:,:3], axis=1)
         return(tot_dip_mat)
 
 
     def static_dielectric_constant(self):
-        """Calculate static dielectric constant (w=0)
+        """Calculate relative static dielectric constant (w=0)
+        Ref: Mol. Phys. 50, 841-858 (1983)
 
         Returns
         -------
         dielec_const_vec : float[:], shape = (num_frame)
+            relative dielectric constant.
         """
         const = Constant()
         tot_dip_mat = self.total_dipole()
         run_avg_dip_vec = self._running_mean(np.sum(tot_dip_mat[:,:3], axis=1))
-        avg_dip = np.mean(tot_dip_mat[:,3])
-        sqr_dip_vec = tot_dip_mat[:,3]**2
-        run_avg_sqr_dip_vec = self._running_mean(sqr_dip_vec)
+        run_avg_sqr_dip_vec = self._running_mean(np.sum(tot_dip_mat[:,:3]**2, axis=1))
 
-        box_mat = np.array([ts.dimensions for ts in self._universe.trajectory])
-        vol_vec = box_mat[:,0]*box_mat[:,1]*box_mat[:,2]
+        vol_vec = self._box_mat[:,0]*self._box_mat[:,1]*self._box_mat[:,2]
 
         dielec_const_vec = np.zeros(self._num_frame)
-        dielec_const_vec.fill(1/3.)
+        dielec_const_vec.fill(4*np.pi/3)
         dielec_const_vec *= run_avg_sqr_dip_vec - run_avg_dip_vec**2
         dielec_const_vec /= vol_vec*const.kB*300
-        dielec_const_vec /= 3.45*1e16
+        dielec_const_vec /= const.eps0*1e-10/(1.602*1.602*1e-38)
         dielec_const_vec += 1
         return(dielec_const_vec)
 
