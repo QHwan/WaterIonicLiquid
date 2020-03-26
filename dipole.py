@@ -12,4 +12,3 @@ class Dipole(object):
         """
         self.u = universe
         self.all_atom = self.u.select_atoms('all')
-        print(self.all_atom.names)
