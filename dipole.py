@@ -7,8 +7,6 @@ import MDAnalysis as md
 from parameter import Parameter
 from constant import Constant
 
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 class Dipole(object):
     """Molecular dipoles of system."""
