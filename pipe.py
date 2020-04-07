@@ -1,21 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import MDAnalysis as md
+import networkx as nx
 
-from hydrogen_bond import hydrogen_bond_matrix
+from hydrogen_bond import hydrogen_bond_graph, hydrogen_bond_pair, HydrogenBond
 
 u = md.Universe('trj/md_300k.tpr',
                 'trj/md_300k_100frame.xtc')
 
-import time
-
-ow = u.select_atoms('name OW')
-atom = u.select_atoms('all')
-for i in range(10):
-    start_time = time.time()
-
+hb = HydrogenBond(u)
+for i in range(1):
     ts = u.trajectory[i]
-    hydrogen_bond_matrix(atom.positions, ow.positions, ts.dimensions)
-    print(time.time() - start_time)
+    hb_pair = hydrogen_bond_pair(hb, ts)
+    hb_graph = hydrogen_bond_graph(hb, hb_pair)
 
+    nx.draw_networkx(hb_graph, with_labels=False, node_size=30)
+    plt.show()
 
