@@ -1,19 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import MDAnalysis as md
-from dipole import Dipole
 
+from hydrogen_bond import hydrogen_bond_matrix
 
 u = md.Universe('trj/md_300k.tpr',
-                'trj/md_300k_100frame_pbc.xtc')
-d = Dipole(u)
+                'trj/md_300k_100frame.xtc')
 
-di_vec = d.static_dielectric_constant()
-Mtot = np.loadtxt('trj/Mtot.xvg')
-eps = np.loadtxt('trj/eps.xvg')
+import time
 
-print(di_vec)
+ow = u.select_atoms('name OW')
+atom = u.select_atoms('all')
+for i in range(10):
+    start_time = time.time()
 
-plt.plot(di_vec)
-plt.plot(eps[:,1], 'o')
-plt.show()
+    ts = u.trajectory[i]
+    hydrogen_bond_matrix(atom.positions, ow.positions, ts.dimensions)
+    print(time.time() - start_time)
+
+
