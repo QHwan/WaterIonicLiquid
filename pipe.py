@@ -11,9 +11,10 @@ u = md.Universe('trj/md_300k.tpr',
 hb = HydrogenBond(u)
 for i in range(1):
     ts = u.trajectory[i]
-    hb_pair = hydrogen_bond_pair(hb, ts)
-    hb_graph = hydrogen_bond_graph(hb, hb_pair)
+    _, hb_pair = hydrogen_bond_pair(hb, ts)
 
-    nx.draw_networkx(hb_graph, with_labels=False, node_size=30)
+    hb_graph = hydrogen_bond_graph(hb, hb_pair, kind='directed')
+
+    nx.draw_networkx(hb_graph, with_labels=False, node_size=20, linwidths=0.2, alpha=0.5)
     plt.show()
 

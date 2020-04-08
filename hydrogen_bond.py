@@ -46,6 +46,7 @@ def hydrogen_bond_pair(HB, ts):
 
     Returns
     -------
+    r_pair : float[:,:], shape = (n_mol, n_mol)
     hb_pair : int[:,:], shape = (n_hb, 3)
         column -> donor_idx, hydrogen_idx, acceptor_idx
     """
@@ -61,6 +62,8 @@ def hydrogen_bond_pair(HB, ts):
     hb_pair_list = []
     for idx_hb in idx_hb_r_c:
         idx_i, idx_j = idx_hb*3
+        if idx_i > idx_j:
+            continue
 
         pbc_x_i = check_pbc_vec(x_sol[idx_j], x_sol[idx_i], box)
         pbc_x_j = check_pbc_vec(x_sol[idx_i], x_sol[idx_j], box)
@@ -86,7 +89,7 @@ def hydrogen_bond_pair(HB, ts):
             continue
                
     hb_pair = np.array(hb_pair_list).astype(int)
-    return(hb_pair)
+    return(r_pair, hb_pair)
 
 
 def hydrogen_bond_graph(HB, hb_pair, kind='undirected'):
@@ -102,7 +105,12 @@ def hydrogen_bond_graph(HB, hb_pair, kind='undirected'):
     ow = HB.universe.select_atoms('name OW')
     nodes = np.array(range(len(ow)))
     edges = (np.array([hb_pair[:,0], hb_pair[:,2]])/3).T.astype(int)
-    G = nx.Graph()
+
+    if kind.lower() == 'undirected':
+        G = nx.Graph()
+    elif kind.lower() == 'directed':
+        G = nx.DiGraph()
+
     G.add_nodes_from(nodes)
     G.add_edges_from(edges)
     return(G)
